@@ -1,11 +1,80 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"strings"
+
+	"github.com/aaronkarr/gokedex/internal/pokeapi"
 )
+
+type config struct {
+	pokeapiClient        pokeapi.Client
+	nextLocationsURL     *string
+	previousLocationsURL *string
+}
+
+func startRepl(cfg *config) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for {
+		fmt.Print("Pokedex > ")
+		scanner.Scan()
+
+		inputWords := cleanInput(scanner.Text())
+		if len(inputWords) == 0 {
+			continue
+		}
+
+		commandWord := inputWords[0]
+
+		command, exists := getCommands()[commandWord]
+		if exists {
+			err := command.callback(cfg)
+			if err != nil {
+				fmt.Println(err)
+			}
+			continue
+		} else {
+			fmt.Println("unknown command")
+			continue
+		}
+	}
+}
 
 func cleanInput(text string) []string {
 	output := strings.ToLower(text)
 	words := strings.Fields(output)
 	return words
+}
+
+type cliCommand struct {
+	name        string
+	description string
+	callback    func(*config) error
+}
+
+func getCommands() map[string]cliCommand {
+	return map[string]cliCommand{
+		"map": {
+			name:        "map",
+			description: "Get the next page of locations",
+			callback:    commandMapf,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Get the previous page of locations",
+			callback:    commandMapb,
+		},
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
+		},
+		"exit": {
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+	}
 }
