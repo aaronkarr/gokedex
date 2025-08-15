@@ -11,6 +11,7 @@ func (c *Client) ListLocations(pageURL *string) (ResShallowLocations, error) {
 	if pageURL != nil {
 		url = *pageURL
 	}
+	println(url)
 
 	//check for locations in cache before making http request
 	if val, ok := c.cache.Get(url); ok {
